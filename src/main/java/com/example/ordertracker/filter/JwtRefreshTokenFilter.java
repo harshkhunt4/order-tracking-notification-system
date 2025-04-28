@@ -1,6 +1,7 @@
 package com.example.ordertracker.filter;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,7 +16,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.example.ordertracker.entity.RefreshToken;
 import com.example.ordertracker.repository.RefreshTokenRepository;
-import com.example.ordertracker.service.JwtService;
 import com.example.ordertracker.util.JwtUtil;
 
 import jakarta.servlet.FilterChain;
@@ -27,13 +27,11 @@ import jakarta.servlet.http.HttpServletResponse;
 public class JwtRefreshTokenFilter extends OncePerRequestFilter {
 
 	private final JwtDecoder jwtDecoder;
-	private final JwtService jwtService;
 	private final RefreshTokenRepository refreshTokenRepo;
 
-	public JwtRefreshTokenFilter(JwtDecoder jwtDecoder, JwtService jwtService, RefreshTokenRepository refreshTokenRepo) {
+	public JwtRefreshTokenFilter(JwtDecoder jwtDecoder, RefreshTokenRepository refreshTokenRepo) {
 		super();
 		this.jwtDecoder = jwtDecoder;
-		this.jwtService = jwtService;
 		this.refreshTokenRepo = refreshTokenRepo;
 	}
 
@@ -48,7 +46,7 @@ public class JwtRefreshTokenFilter extends OncePerRequestFilter {
 		}
 
 		String token = authHeader.substring(7);
-		Jwt jwtToken = jwtDecoder.decode(token);
+		Jwt jwtToken= jwtDecoder.decode(token);  
 
 		String email = jwtToken.getSubject();
 		if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -59,7 +57,7 @@ public class JwtRefreshTokenFilter extends OncePerRequestFilter {
 			UserDetails userDetails = refreshToken.getUser();
 			if (JwtUtil.isTokenValid(jwtToken, userDetails)) {
 				UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails,
-						null, userDetails.getAuthorities());
+						null, List.of(() -> "SCOPE_REFRESH_TOKEN"));
 				authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 				SecurityContextHolder.getContext().setAuthentication(authToken);
 			}
