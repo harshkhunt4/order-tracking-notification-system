@@ -1,6 +1,7 @@
 package com.example.ordertracker.entity;
 
 import com.example.ordertracker.model.OrderStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
@@ -21,7 +22,7 @@ import lombok.NoArgsConstructor;
 public class OrderProduct {
 
   @EmbeddedId
-  //@JsonIgnore
+  @JsonIgnore
   private OrderProductPK pk;
   
   @Column(nullable = false)
