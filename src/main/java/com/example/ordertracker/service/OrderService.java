@@ -15,6 +15,7 @@ import com.example.ordertracker.event.OrderProductEvent;
 import com.example.ordertracker.mapper.OrderModelMapper;
 import com.example.ordertracker.model.OrderStatus;
 import com.example.ordertracker.model.request.OrderRequest;
+import com.example.ordertracker.repository.OrderProductRepository;
 import com.example.ordertracker.repository.OrderRepository;
 import com.example.ordertracker.repository.ProductRepository;
 
@@ -24,16 +25,20 @@ public class OrderService {
   private final ProductRepository productRepo;
   private final OrderRepository orderRepo;
   private final OrderModelMapper orderMapper;
+  private final OrderProductRepository opRepo;
   private final KafkaTemplate<String, OrderProductEvent> kafkaTemplate;
-  //private final ObjectMapper objMapper = new ObjectMapper();
-  
+  private final RedisService redisService;
+
   public OrderService(ProductRepository productRepo, OrderRepository orderRepo,
-      OrderModelMapper orderMapper, KafkaTemplate<String, OrderProductEvent> kafkaTemplate) {
+      OrderModelMapper orderMapper, KafkaTemplate<String, OrderProductEvent> kafkaTemplate,
+      RedisService redisService, OrderProductRepository opRepo) {
     super();
     this.productRepo = productRepo;
     this.orderRepo = orderRepo;
     this.orderMapper = orderMapper;
+    this.opRepo = opRepo;
     this.kafkaTemplate = kafkaTemplate;
+    this.redisService = redisService;
   }
 
   @PreAuthorize("hasAuthority('SCOPE_READ')")
@@ -65,5 +70,20 @@ public class OrderService {
     String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
 
     return this.orderMapper.ordersToDto(orderRepo.findByUserEmail(userEmail));
+  }
+
+  @PreAuthorize("hasAuthority('SCOPE_READ')")
+  public OrderStatus getOrderStatus(String orderId, String productId) {
+    OrderStatus opStatus = this.redisService.getOrderProductStatus(orderId + productId);
+    if (opStatus == null) {
+      OrderProduct op = this.opRepo.findByProductIdAndOrderId(productId, orderId)
+          .orElseThrow(() -> new RuntimeException(
+              "For orderId " + orderId + " product " + productId + " not found."));
+
+      this.redisService.setOrderProductStatus(
+          op.getPk().getOrder().getId() + op.getProduct().getId(), op.getStatus());
+      return op.getStatus();
+    }
+    return opStatus;
   }
 }

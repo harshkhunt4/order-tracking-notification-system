@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.example.ordertracker.entity.OrderProduct;
 import com.example.ordertracker.event.OrderProductEvent;
 import com.example.ordertracker.repository.OrderProductRepository;
+import com.example.ordertracker.service.RedisService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -16,28 +17,32 @@ import lombok.extern.slf4j.Slf4j;
 public class OrderStatusConsumer {
 
   private final OrderProductRepository orderProductRepo;
+  private final RedisService redisService;
 
-  public OrderStatusConsumer(OrderProductRepository orderProductRepo) {
+  public OrderStatusConsumer(OrderProductRepository orderProductRepo, RedisService redisService) {
     super();
     this.orderProductRepo = orderProductRepo;
+    this.redisService = redisService;
   }
 
   @KafkaListener(topics = "order-product-status-events", groupId = "order-consumer-group")
-  public void consumeOrderEvent(OrderProductEvent orderProductEvent) {
+  public void consumeOrderEvent(OrderProductEvent opEvent) {
 
-    log.info("Received order event: {}", orderProductEvent);
+    log.info("Received order event: {}", opEvent);
 
-    String productId = orderProductEvent.getProductId();
-    String orderId = orderProductEvent.getOrderId();
-    Optional<OrderProduct> orderProductFromRepo = orderProductRepo.findByProductIdAndOrderId(productId,
-        orderId);
+    String productId = opEvent.getProductId();
+    String orderId = opEvent.getOrderId();
+    Optional<OrderProduct> orderProductFromRepo = orderProductRepo
+        .findByProductIdAndOrderId(productId, orderId);
 
     if (orderProductFromRepo.isEmpty()) {
-      log.warn("Order not found: {}", orderProductEvent.getOrderId());
+      log.warn("Order not found: {}", opEvent.getOrderId());
       return;
     }
 
     orderProductRepo.updateProductStatusByProductIdAndOrderId(productId, orderId,
-        orderProductEvent.getStatus());
+        opEvent.getStatus());
+
+    this.redisService.setOrderProductStatus(orderId+productId,opEvent.getStatus());
   }
 }
