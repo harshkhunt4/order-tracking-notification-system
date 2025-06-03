@@ -1,0 +1,9 @@
+##################
+####JAVA CLASSES
+##################
+InitialUserInfo.java
+
+.classpath
+.factorypath
+target/classes
+.settings/
