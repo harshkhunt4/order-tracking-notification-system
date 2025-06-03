@@ -49,13 +49,13 @@ public class UserController {
   }
 
   @PutMapping("/users/{id}")
-  public String updateUserDetail(@PathVariable @NotEmpty String id,
+  public String updateUserDetail(@PathVariable(name = "id") @NotEmpty String id,
       @RequestBody @Valid @NotNull UserDetailUpdateRequest userDetailsUpdate) {
     return userDetailService.updateUserDetails(id, userDetailsUpdate);
   }
 
   @DeleteMapping("/users/{id}")
-  public String deleteUserDetail(@PathVariable @NotEmpty String id) {
+  public String deleteUserDetail(@PathVariable(name = "id") @NotEmpty String id) {
     return userDetailService.deleteUserDetails(id);
   }
 }
