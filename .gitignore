@@ -5,4 +5,5 @@ InitialUserInfo.java
 
 .classpath
 .factorypath
-target/*
+target/classes
+.settings/
