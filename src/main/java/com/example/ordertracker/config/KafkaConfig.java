@@ -21,7 +21,6 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 import com.example.ordertracker.event.OrderProductEvent;
 
 @Configuration
-
 public class KafkaConfig {
 
   @Bean
