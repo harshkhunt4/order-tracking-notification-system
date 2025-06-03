@@ -17,7 +17,6 @@ import org.springframework.security.oauth2.server.resource.web.access.BearerToke
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import com.example.ordertracker.filter.JwtRefreshTokenFilter;
 import com.example.ordertracker.repository.RefreshTokenRepository;
@@ -69,7 +68,7 @@ public class SecurityFilterChainConfig {
   SecurityFilterChain usersApiFilterChain(HttpSecurity http) throws Exception {
       applyCommonStatelessConfig(http);
       http
-          .securityMatcher(new AntPathRequestMatcher("/api/users/**"))
+          .securityMatcher("/api/users/**","/api/orders/**","/user/topic/**")
           .authorizeHttpRequests(req -> req.anyRequest().authenticated())
           .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt
               .jwtAuthenticationConverter(customJwtAuthenticationConverter)));
@@ -87,7 +86,7 @@ public class SecurityFilterChainConfig {
           .securityMatcher("api/auth/refresh-token/**")
           .authorizeHttpRequests(req -> req.anyRequest().authenticated())
           //.oauth2ResourceServer(oauth2 -> oauth2.jwt(withDefaults()))
-          .addFilterBefore(new JwtRefreshTokenFilter(jwtDecoder, jwtService, refreshTokenRepo), UsernamePasswordAuthenticationFilter.class);
+          .addFilterBefore(new JwtRefreshTokenFilter(jwtDecoder, refreshTokenRepo), UsernamePasswordAuthenticationFilter.class);
       applyCommonExceptionHandling(http);
       http.httpBasic(withDefaults());
       return http.build();
@@ -117,7 +116,7 @@ public class SecurityFilterChainConfig {
   SecurityFilterChain signUpFilterChain(HttpSecurity http) throws Exception {
       applyCommonStatelessConfig(http);
       http
-          .securityMatcher("/api/auth/sign-up/**")
+          .securityMatcher("/api/auth/sign-up/**","/api/products/**")
           .authorizeHttpRequests(req -> req.anyRequest().permitAll());
       return http.build();
   }
